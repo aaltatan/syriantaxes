@@ -1,0 +1,25 @@
+[project]
+name = "syriantaxes"
+version = "0.1.0"
+description = "A Python package for calculating taxes and compensations for Syrian salaries based on Syrian tax laws."
+readme = "README.md"
+authors = [{ name = "Abdullah Altatan", email = "a.altatan@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+syriantaxes = "syriantaxes:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.0.0",
+    "pytest>=9.0.2",
+    "syriantaxes",
+]
+
+[tool.uv.sources]
+syriantaxes = { workspace = true }
