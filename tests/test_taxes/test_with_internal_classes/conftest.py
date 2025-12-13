@@ -1,12 +1,7 @@
 from decimal import Decimal
 
 import pytest
-from syriantaxes import (
-    Bracket,
-    Rounder,
-    RoundingMethod,
-    SocialSecurity,
-)
+from syriantaxes import Bracket, Rounder, RoundingMethod, SocialSecurity
 
 
 @pytest.fixture()
@@ -20,18 +15,8 @@ def ss_rounder() -> Rounder:
 
 
 @pytest.fixture()
-def ss(ss_rounder: Rounder) -> SocialSecurity:
+def ss_obj(ss_rounder: Rounder) -> SocialSecurity:
     return SocialSecurity(Decimal(750_000), Decimal("0.07"), ss_rounder)
-
-
-@pytest.fixture()
-def compensations_tax_rate() -> Decimal:
-    return Decimal("0.05")
-
-
-@pytest.fixture()
-def compensations_rate() -> Decimal:
-    return Decimal("0.75")
 
 
 @pytest.fixture()

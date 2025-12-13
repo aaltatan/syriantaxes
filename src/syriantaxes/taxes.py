@@ -1,5 +1,5 @@
-import decimal
 from collections.abc import Iterable
+from decimal import ROUND_DOWN, ROUND_HALF_EVEN, Decimal
 from typing import ClassVar, Protocol, TypeAlias, TypedDict
 
 from .cast import cast_to_decimal
@@ -7,7 +7,7 @@ from .types import Number, Rounder
 
 
 class SocialSecurity(Protocol):
-    def calculate_deduction(self, salary: Number) -> decimal.Decimal: ...
+    def calculate_deduction(self, salary: Number) -> Decimal: ...
 
 
 class BracketWithProps(Protocol):
@@ -51,7 +51,7 @@ def calculate_fixed_tax(
     amount: Number,
     fixed_tax_rate: Number,
     rounder: Rounder | None = None,
-) -> decimal.Decimal:
+) -> Decimal:
     """Calculate the fixed tax for an amount.
 
     Args:
@@ -60,7 +60,7 @@ def calculate_fixed_tax(
         rounder (Rounder, optional): The rounder to use for rounding the result. Defaults to None.
 
     Returns:
-        decimal.Decimal: The calculated fixed tax.
+        Decimal: The calculated fixed tax.
 
     """  # noqa: E501
     amount = cast_to_decimal(amount)
@@ -76,16 +76,16 @@ def calculate_gross_compensation(
     target: Number,
     compensations_tax_rate: Number,
     rounder: Rounder | None = None,
-) -> decimal.Decimal:
+) -> Decimal:
     """Calculate the gross compensation for an amount.
 
     Args:
-        target (decimal.Decimal): The amount to calculate the compensation for.
-        compensations_tax_rate (decimal.Decimal | float): The fixed tax rate.
+        target (Number): The amount to calculate the compensation for.
+        compensations_tax_rate (Number): The fixed tax rate.
         rounder (Rounder, optional): The rounder to use for rounding the result. Defaults to None.
 
     Returns:
-        decimal.Decimal: The calculated gross compensation.
+        Decimal: The calculated gross compensation.
 
     """  # noqa: E501
     compensations_tax_rate = cast_to_decimal(compensations_tax_rate, lt=0, gt=1)
@@ -96,32 +96,38 @@ def calculate_gross_compensation(
     if rounder is not None:
         return rounder.round(gross)
 
-    return gross
+    return gross.quantize(Decimal("1.00"), rounding=ROUND_HALF_EVEN)
 
 
-def calculate_brackets_tax(
+def calculate_brackets_tax(  # noqa: PLR0913
     amount: Number,
     brackets: Brackets,
+    min_allowed_salary: Number,
     rounder: Rounder | None = None,
     ss_obj: SocialSecurity | None = None,
     ss_salary: Number | None = None,
-) -> decimal.Decimal:
+) -> Decimal:
     """Calculate the tax for an amount based on brackets.
 
     Args:
-        amount (decimal.Decimal): The amount to calculate the tax for.
+        amount (Number): The amount to calculate the tax for.
         brackets (Brackets): The brackets to use for calculating the tax.
+        min_allowed_salary (Number): The minimum allowed salary.
         rounder (Rounder, optional): The rounder to use for rounding the result. Defaults to None.
         ss_obj (SocialSecurity, optional): The social security object to use for calculating the deduction. Defaults to None.
-        ss_salary (decimal.Decimal, optional): The social security salary to use for calculating the deduction. Defaults to None.
+        ss_salary (Number, optional): The social security salary to use for calculating the deduction. Defaults to None.
 
     Returns:
-        decimal.Decimal: The calculated tax.
+        Decimal: The calculated tax.
 
     """  # noqa: E501
     amount = cast_to_decimal(amount)
+    min_allowed_salary = cast_to_decimal(min_allowed_salary)
 
-    tax = decimal.Decimal(0)
+    tax = Decimal(0)
+
+    if amount <= min_allowed_salary:
+        return tax
 
     if ss_obj is not None:
         ss_salary = ss_salary or amount
@@ -131,14 +137,11 @@ def calculate_brackets_tax(
         taxable_salary = amount
 
     for bracket in brackets:
-        if isinstance(bracket, dict):
-            bracket_min = bracket["min"]
-            bracket_max = bracket["max"]
-            bracket_rate = bracket["rate"]
-        else:
-            bracket_min = bracket.min
-            bracket_max = bracket.max
-            bracket_rate = bracket.rate
+        is_dict = isinstance(bracket, dict)
+
+        bracket_min = bracket["min"] if is_dict else bracket.min
+        bracket_max = bracket["max"] if is_dict else bracket.max
+        bracket_rate = bracket["rate"] if is_dict else bracket.rate
 
         bracket_min = cast_to_decimal(bracket_min, lt=0)
         bracket_max = cast_to_decimal(bracket_max, lte=bracket_min)
@@ -155,58 +158,60 @@ def calculate_brackets_tax(
 
         tax += (bracket_max - bracket_min) * bracket_rate
 
-    if rounder is not None:
-        return rounder.round(tax)
-
     return tax
 
 
 def calculate_gross_salary(
-    amount: Number,
+    target: Number,
     brackets: Brackets,
     min_allowed_salary: Number,
     rounder: Rounder | None = None,
-) -> decimal.Decimal:
+    max_amount_ratio: Number = 1.5,
+) -> Decimal:
     """Calculate the gross fixed salary for an amount based on brackets.
 
     Args:
-        amount (decimal.Decimal): The amount to calculate the gross fixed salary for.
+        target (Number): The amount to calculate the gross fixed salary for.
         brackets (Brackets): The brackets to use for calculating the tax.
-        min_allowed_salary (decimal.Decimal): The minimum allowed salary.
+        min_allowed_salary (Number): The minimum allowed salary.
         rounder (Rounder, optional): The rounder to use for rounding the result. Defaults to None.
+        max_amount_ratio (Number, optional): The maximum amount ratio. Defaults to 1.5.
 
     Returns:
-        decimal.Decimal: The calculated gross fixed salary.
+        Decimal: The calculated gross fixed salary.
 
     """  # noqa: E501
-    amount = cast_to_decimal(amount)
+    target = cast_to_decimal(target)
     min_allowed_salary = cast_to_decimal(min_allowed_salary)
 
-    if amount < min_allowed_salary:
+    if target < min_allowed_salary:
         message = (
             f"Can't be calculated for salary less than {min_allowed_salary}."
         )
         raise ValueError(message)
 
-    if calculate_brackets_tax(amount, brackets, rounder) == 0:
-        return amount
+    if (
+        calculate_brackets_tax(target, brackets, min_allowed_salary, rounder)
+        == 0
+    ):
+        return target
 
-    min_amount = decimal.Decimal(amount)
-    max_amount = (amount * decimal.Decimal("1.5")).to_integral(
-        rounding=decimal.ROUND_DOWN
-    )
+    max_amount_ratio = cast_to_decimal(max_amount_ratio, lt=0)
+
+    min_amount = Decimal(target)
+    max_amount = (target * max_amount_ratio).to_integral(rounding=ROUND_DOWN)
 
     while True:
         mid_amount = ((min_amount + max_amount) / 2).to_integral(
-            rounding=decimal.ROUND_DOWN
+            rounding=ROUND_DOWN
         )
         mid_net = mid_amount - calculate_brackets_tax(
-            mid_amount, brackets, rounder
+            mid_amount, brackets, min_allowed_salary, rounder
         )
 
-        if mid_net > amount:
+        if mid_net > target:
             max_amount = mid_amount
-        elif mid_net < amount:
+        elif mid_net < target:
             min_amount = mid_amount
         else:
             return mid_amount
@@ -219,19 +224,19 @@ def calculate_gross_components(  # noqa: PLR0913
     min_allowed_salary: Number,
     compensations_tax_rate: Number,
     rounder: Rounder | None = None,
-) -> tuple[decimal.Decimal, decimal.Decimal]:
+) -> tuple[Decimal, Decimal]:
     """Calculate the gross components for an amount based on brackets.
 
     Args:
-        target (decimal.Decimal): The amount to calculate the gross components for.
-        compensations_rate (decimal.Decimal | float): The compensations rate.
+        target (Number): The amount to calculate the gross components for.
+        compensations_rate (Number | float): The compensations rate.
         brackets (Brackets): The brackets to use for calculating the tax.
-        min_allowed_salary (decimal.Decimal): The minimum allowed salary.
-        compensations_tax_rate (decimal.Decimal): The compensations tax rate.
+        min_allowed_salary (Number): The minimum allowed salary.
+        compensations_tax_rate (Number): The compensations tax rate.
         rounder (Rounder, optional): The rounder to use for rounding the result. Defaults to None.
 
     Returns:
-        tuple[decimal.Decimal, decimal.Decimal]: A tuple containing the gross salary and compensations.
+        tuple[Decimal, Decimal]: A tuple containing the gross salary and compensations.
 
     """  # noqa: E501
     compensations_rate = cast_to_decimal(compensations_rate, lt=0, gt=1)
@@ -244,14 +249,14 @@ def calculate_gross_components(  # noqa: PLR0913
         )
         raise ValueError(message)
 
-    gross_salary_before = decimal.Decimal(
+    gross_salary_before = Decimal(
         target * (1 - compensations_rate)
-    ).to_integral(rounding=decimal.ROUND_DOWN)
+    ).to_integral(rounding=ROUND_DOWN)
 
     if gross_salary_before < min_allowed_salary:
         gross_salary = min_allowed_salary
         minium_salary_tax = calculate_brackets_tax(
-            min_allowed_salary, brackets, rounder
+            min_allowed_salary, brackets, min_allowed_salary, rounder
         )
         compensations_before = target - min_allowed_salary + minium_salary_tax
     else:
