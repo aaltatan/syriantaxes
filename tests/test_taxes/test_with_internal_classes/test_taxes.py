@@ -228,15 +228,34 @@ def test_calculate_gross_salary(
     expected_gross: Decimal,
 ):
     gross_salary = calculate_gross_salary(
-        target=target,
-        brackets=brackets,
-        min_allowed_salary=min_allowed_salary,
-        rounder=tax_rounder,
+        target, brackets, min_allowed_salary, tax_rounder
     )
 
     assert isinstance(gross_salary, Decimal)
     assert gross_salary == expected_gross
 
 
-# TODO: test for calculate_gross_salary without rounder  # noqa: E501, FIX002, TD002, TD003
+@pytest.mark.parametrize(
+    "target, expected_gross",
+    [
+        (837_000, Decimal(837_000)),
+        (1_000_000, Decimal(1_024_058)),
+        (1_712_500, Decimal(1_860_506)),
+        (2_000_000, Decimal(2_198_741)),
+        (2_224_700, Decimal(2_463_094)),
+        (4_350_000, Decimal(4_963_447)),
+    ],
+)
+def test_calculate_gross_salary_without_rounder(
+    brackets: list[Bracket],
+    min_allowed_salary: Number,
+    target: Number,
+    expected_gross: Decimal,
+):
+    gross_salary = calculate_gross_salary(target, brackets, min_allowed_salary)
+
+    assert isinstance(gross_salary, Decimal)
+    assert gross_salary == expected_gross
+
+
 # TODO: test for calculate_gross_components  # noqa: FIX002, TD002, TD003

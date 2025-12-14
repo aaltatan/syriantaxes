@@ -209,6 +209,9 @@ def calculate_gross_salary(
             mid_amount, brackets, min_allowed_salary, rounder
         )
 
+        if rounder is None:
+            mid_net = mid_net.to_integral(rounding=ROUND_HALF_EVEN)
+
         if mid_net > target:
             max_amount = mid_amount
         elif mid_net < target:
