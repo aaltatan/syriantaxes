@@ -131,17 +131,20 @@ def calculate_brackets_tax(  # noqa: PLR0913
 
     if ss_obj is not None:
         ss_salary = ss_salary or amount
-        ss_salary = cast_to_decimal(ss_salary, lt=0)
+        ss_salary = cast_to_decimal(ss_salary)
         taxable_salary = amount - ss_obj.calculate_deduction(ss_salary)
     else:
         taxable_salary = amount
 
     for bracket in brackets:
-        is_dict = isinstance(bracket, dict)
-
-        bracket_min = bracket["min"] if is_dict else bracket.min
-        bracket_max = bracket["max"] if is_dict else bracket.max
-        bracket_rate = bracket["rate"] if is_dict else bracket.rate
+        if isinstance(bracket, dict):
+            bracket_min = bracket["min"]
+            bracket_max = bracket["max"]
+            bracket_rate = bracket["rate"]
+        else:
+            bracket_min = bracket.min
+            bracket_max = bracket.max
+            bracket_rate = bracket.rate
 
         bracket_min = cast_to_decimal(bracket_min, lt=0)
         bracket_max = cast_to_decimal(bracket_max, lte=bracket_min)

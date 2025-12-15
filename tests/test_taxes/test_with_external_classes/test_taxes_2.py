@@ -1,12 +1,10 @@
-# ruff: noqa: S101, PLR0913
+# ruff: noqa: S101, PLR0913, ANN001
+# type: ignore  # noqa: PGH003
 
 from decimal import Decimal
 
 import pytest
 from syriantaxes import (
-    Bracket,
-    Rounder,
-    SocialSecurity,
     calculate_brackets_tax,
     calculate_fixed_tax,
     calculate_gross_compensation,
@@ -26,7 +24,7 @@ from syriantaxes.types import Number
     ],
 )
 def test_calculate_fixed_tax(
-    tax_rounder: Rounder,
+    tax_rounder,
     compensations_tax_rate: Decimal,
     amount: Number,
     expected_tax: Decimal,
@@ -66,7 +64,7 @@ def test_calculate_fixed_tax_without_rounder(
     ],
 )
 def test_calculate_gross_compensation(
-    tax_rounder: Rounder,
+    tax_rounder,
     compensations_tax_rate: Decimal,
     target: Number,
     expected_gross: Decimal,
@@ -111,9 +109,9 @@ def test_calculate_gross_compensation_without_rounder(
     ],
 )
 def test_calculate_brackets_tax_without_ss(
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Number,
-    tax_rounder: Rounder,
+    tax_rounder,
     amount: Number,
     expected_tax: Decimal,
 ) -> None:
@@ -134,7 +132,7 @@ def test_calculate_brackets_tax_without_ss(
     ],
 )
 def test_calculate_brackets_tax_without_rounder(
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Number,
     amount: Number,
     expected_tax: Decimal,
@@ -175,9 +173,9 @@ def test_calculate_brackets_tax_without_brackets(
     ],
 )
 def test_calculate_brackets_tax_with_ss(
-    brackets: list[Bracket],
-    tax_rounder: Rounder,
-    ss_obj: SocialSecurity,
+    brackets,
+    tax_rounder,
+    ss_obj,
     min_allowed_salary: Number,
     amount: Number,
     ss_salary: Number,
@@ -197,7 +195,7 @@ def test_calculate_brackets_tax_with_ss(
 
 
 def test_calculate_gross_salary_under_min_allowed_salary(
-    brackets: list[Bracket], min_allowed_salary: Number, tax_rounder: Rounder
+    brackets, min_allowed_salary: Number, tax_rounder
 ) -> None:
     with pytest.raises(ValueError):
         target = Decimal(min_allowed_salary) - 1
@@ -221,9 +219,9 @@ def test_calculate_gross_salary_under_min_allowed_salary(
     ],
 )
 def test_calculate_gross_salary(
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Number,
-    tax_rounder: Rounder,
+    tax_rounder,
     target: Number,
     expected_gross: Decimal,
 ):
@@ -247,7 +245,7 @@ def test_calculate_gross_salary(
     ],
 )
 def test_calculate_gross_salary_without_rounder(
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Number,
     target: Number,
     expected_gross: Decimal,
@@ -260,10 +258,10 @@ def test_calculate_gross_salary_without_rounder(
 
 def test_calculate_gross_components_with_less_than_min_salary(
     compensations_rate: Decimal,
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Decimal,
     compensations_tax_rate: Decimal,
-    tax_rounder: Rounder,
+    tax_rounder,
 ) -> None:
     with pytest.raises(ValueError):
         calculate_gross_components(
@@ -288,10 +286,10 @@ def test_calculate_gross_components_with_less_than_min_salary(
 )
 def test_calculate_gross_components(
     compensations_rate: Decimal,
-    brackets: list[Bracket],
+    brackets,
     min_allowed_salary: Number,
     compensations_tax_rate: Decimal,
-    tax_rounder: Rounder,
+    tax_rounder,
     target: Number,
     expected_gross: Decimal,
     expected_compensations: Decimal,

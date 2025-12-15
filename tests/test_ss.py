@@ -18,13 +18,24 @@ def deduction_rate() -> Decimal:
 
 
 @pytest.fixture()
-def ss(rounder: Rounder, deduction_rate: Decimal) -> SocialSecurity:
-    return SocialSecurity(Decimal(750_000), deduction_rate, rounder)
+def min_ss_allowed_salary() -> Decimal:
+    return Decimal(750_000)
 
 
 @pytest.fixture()
-def ss_without_rounder(deduction_rate: Decimal) -> SocialSecurity:
-    return SocialSecurity(Decimal(750_000), deduction_rate)
+def ss(
+    rounder: Rounder,
+    deduction_rate: Decimal,
+    min_ss_allowed_salary: Decimal,
+) -> SocialSecurity:
+    return SocialSecurity(min_ss_allowed_salary, deduction_rate, rounder)
+
+
+@pytest.fixture()
+def ss_without_rounder(
+    deduction_rate: Decimal, min_ss_allowed_salary: Decimal
+) -> SocialSecurity:
+    return SocialSecurity(min_ss_allowed_salary, deduction_rate)
 
 
 @pytest.mark.parametrize(
@@ -78,12 +89,19 @@ def test_ss_without_rounder_calculate_deduction(
     assert result == deduction
 
 
-def test_init_with_invalid_args() -> None:
+def test_ss_with_invalid_salary(
+    ss: SocialSecurity, min_ss_allowed_salary: Decimal
+) -> None:
     with pytest.raises(ValueError):
-        SocialSecurity(Decimal(750_000), -0.1)
+        ss.calculate_deduction(min_ss_allowed_salary - 1)
+
+
+def test_init_with_invalid_args(min_ss_allowed_salary: Decimal) -> None:
+    with pytest.raises(ValueError):
+        SocialSecurity(min_ss_allowed_salary, -0.1)
 
     with pytest.raises(ValueError):
-        SocialSecurity(Decimal(750_000), 1.1)
+        SocialSecurity(min_ss_allowed_salary, 1.1)
 
     with pytest.raises(ValueError):
         SocialSecurity(Decimal(-1_000_000), 0.5)
