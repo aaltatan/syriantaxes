@@ -6,9 +6,18 @@ readme = "README.md"
 authors = [{ name = "Abdullah Altatan", email = "a.altatan@gmail.com" }]
 requires-python = ">=3.10"
 dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
 
 [project.scripts]
 syriantaxes = "syriantaxes:main"
+
+[project.urls]
+"Homepage" = "https://github.com/aaltatan/syriantaxes"
+"Issues" = "https://github.com/aaltatan/syriantaxes/issues"
 
 [build-system]
 requires = ["hatchling"]
