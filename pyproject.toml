@@ -1,6 +1,6 @@
 [project]
 name = "syriantaxes"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Python package for calculating taxes and compensations for Syrian salaries based on Syrian tax laws."
 readme = "README.md"
 authors = [{ name = "Abdullah Altatan", email = "a.altatan@gmail.com" }]

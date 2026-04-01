@@ -126,9 +126,6 @@ def calculate_brackets_tax(  # noqa: PLR0913
 
     tax = Decimal(0)
 
-    if amount <= min_allowed_salary:
-        return tax
-
     if ss_obj is not None:
         ss_salary = ss_salary or amount
         ss_salary = cast_to_decimal(ss_salary)
