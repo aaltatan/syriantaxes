@@ -24,9 +24,7 @@ class Rounder:
     def round(self, number: Number) -> Decimal:
         value = cast_to_decimal(number)
 
-        return (value / self._to_nearest).to_integral_value(
-            self._method
-        ) * self._to_nearest
+        return (value / self._to_nearest).to_integral_value(self._method) * self._to_nearest
 
     @property
     def to_nearest(self) -> Decimal:

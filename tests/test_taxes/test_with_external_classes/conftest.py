@@ -10,7 +10,7 @@ class SocialSecurity:
 
     def calculate_deduction(self, salary: Decimal) -> Decimal:
         deduction = Decimal(salary) * Decimal("0.07")
-        return ceil(deduction) # type: ignore  # noqa: PGH003
+        return ceil(deduction)  # type: ignore  # noqa: PGH003
 
 
 class OneHundredRounder:

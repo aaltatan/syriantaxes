@@ -1,4 +1,4 @@
-# ruff: noqa: S101, PLR0913, ANN001
+# ruff: noqa:  PLR0913, ANN001
 # type: ignore  # noqa: PGH003
 
 from decimal import Decimal
@@ -69,9 +69,7 @@ def test_calculate_gross_compensation(
     target: Number,
     expected_gross: Decimal,
 ) -> None:
-    result = calculate_gross_compensation(
-        target, compensations_tax_rate, tax_rounder
-    )
+    result = calculate_gross_compensation(target, compensations_tax_rate, tax_rounder)
 
     assert isinstance(result, Decimal)
     assert result == expected_gross
@@ -115,9 +113,7 @@ def test_calculate_brackets_tax_without_ss(
     amount: Number,
     expected_tax: Decimal,
 ) -> None:
-    tax = calculate_brackets_tax(
-        amount, brackets, min_allowed_salary, tax_rounder
-    )
+    tax = calculate_brackets_tax(amount, brackets, min_allowed_salary, tax_rounder)
 
     assert isinstance(tax, Decimal)
     assert tax == expected_tax
@@ -225,9 +221,7 @@ def test_calculate_gross_salary(
     target: Number,
     expected_gross: Decimal,
 ):
-    gross_salary = calculate_gross_salary(
-        target, brackets, min_allowed_salary, tax_rounder
-    )
+    gross_salary = calculate_gross_salary(target, brackets, min_allowed_salary, tax_rounder)
 
     assert isinstance(gross_salary, Decimal)
     assert gross_salary == expected_gross

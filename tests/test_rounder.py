@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 from decimal import Decimal
 
 import pytest
@@ -22,10 +20,7 @@ from syriantaxes.types import Number
     ],
 )
 def test_rounder_init_with_valid_args(
-    method: RoundingMethod,
-    to_nearest: Number,
-    amount: Number,
-    expected: Decimal,
+    method: RoundingMethod, to_nearest: Number, amount: Number, expected: Decimal
 ) -> None:
     rounder = Rounder(method, to_nearest)
     result = rounder.round(amount)

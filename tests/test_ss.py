@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 from decimal import Decimal
 
 import pytest
@@ -23,18 +21,12 @@ def min_ss_allowed_salary() -> Decimal:
 
 
 @pytest.fixture()
-def ss(
-    rounder: Rounder,
-    deduction_rate: Decimal,
-    min_ss_allowed_salary: Decimal,
-) -> SocialSecurity:
+def ss(rounder: Rounder, deduction_rate: Decimal, min_ss_allowed_salary: Decimal) -> SocialSecurity:
     return SocialSecurity(min_ss_allowed_salary, deduction_rate, rounder)
 
 
 @pytest.fixture()
-def ss_without_rounder(
-    deduction_rate: Decimal, min_ss_allowed_salary: Decimal
-) -> SocialSecurity:
+def ss_without_rounder(deduction_rate: Decimal, min_ss_allowed_salary: Decimal) -> SocialSecurity:
     return SocialSecurity(min_ss_allowed_salary, deduction_rate)
 
 
@@ -59,8 +51,7 @@ def test_ss_with_rounder_calculate_deduction(
     assert isinstance(result, Decimal)
 
     assert (
-        str(ss)
-        == f"SocialSecurity(min_salary={ss.min_salary}, deduction_rate={ss.deduction_rate})"  # noqa: E501
+        str(ss) == f"SocialSecurity(min_salary={ss.min_salary}, deduction_rate={ss.deduction_rate})"
     )
     assert result == deduction
 
@@ -77,9 +68,7 @@ def test_ss_with_rounder_calculate_deduction(
     ],
 )
 def test_ss_without_rounder_calculate_deduction(
-    ss_without_rounder: SocialSecurity,
-    salary: Number,
-    deduction: Decimal,
+    ss_without_rounder: SocialSecurity, salary: Number, deduction: Decimal
 ) -> None:
     result = ss_without_rounder.calculate_deduction(salary)
 
@@ -89,9 +78,7 @@ def test_ss_without_rounder_calculate_deduction(
     assert result == deduction
 
 
-def test_ss_with_invalid_salary(
-    ss: SocialSecurity, min_ss_allowed_salary: Decimal
-) -> None:
+def test_ss_with_invalid_salary(ss: SocialSecurity, min_ss_allowed_salary: Decimal) -> None:
     with pytest.raises(ValueError):
         ss.calculate_deduction(min_ss_allowed_salary - 1)
 

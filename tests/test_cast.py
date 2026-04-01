@@ -1,5 +1,3 @@
-# ruff: noqa: S101, PLR0913
-
 from decimal import Decimal
 
 import pytest
@@ -20,9 +18,7 @@ from syriantaxes.types import Number
         (-100.22, Decimal("-100.22")),
     ],
 )
-def test_cast_to_decimal_with_number_valid_inputs(
-    value: Number, expected: Decimal
-) -> None:
+def test_cast_to_decimal_with_number_valid_inputs(value: Number, expected: Decimal) -> None:
     assert isinstance(cast_to_decimal(value), Decimal)
     assert cast_to_decimal(value) == expected
 
@@ -53,7 +49,7 @@ def test_cast_to_decimal_with_number_invalid_inputs(value: Number) -> None:
         (50.01, 50, 100, 50, 100, Decimal("50.01")),
     ],
 )
-def test_cast_to_decimal_with_validators_valid_inputs(
+def test_cast_to_decimal_with_validators_valid_inputs(  # noqa: PLR0913
     value: Number,
     lt: Number | None,
     gt: Number | None,
@@ -75,11 +71,7 @@ def test_cast_to_decimal_with_validators_valid_inputs(
     ],
 )
 def test_cast_to_decimal_with_validators_invalid_inputs(
-    value: Number,
-    lt: Number | None,
-    gt: Number | None,
-    lte: Number | None,
-    gte: Number | None,
+    value: Number, lt: Number | None, gt: Number | None, lte: Number | None, gte: Number | None
 ) -> None:
     with pytest.raises(ValueError):
         cast_to_decimal(value, lt=lt, gt=gt, lte=lte, gte=gte)

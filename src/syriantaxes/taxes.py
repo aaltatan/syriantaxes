@@ -62,7 +62,7 @@ def calculate_fixed_tax(
     Returns:
         Decimal: The calculated fixed tax.
 
-    """  # noqa: E501
+    """
     amount = cast_to_decimal(amount)
     fixed_tax_rate = cast_to_decimal(fixed_tax_rate, lt=0, gt=1)
 
@@ -87,7 +87,7 @@ def calculate_gross_compensation(
     Returns:
         Decimal: The calculated gross compensation.
 
-    """  # noqa: E501
+    """
     compensations_tax_rate = cast_to_decimal(compensations_tax_rate, lt=0, gt=1)
     target = cast_to_decimal(target)
 
@@ -183,20 +183,15 @@ def calculate_gross_salary(
     Returns:
         Decimal: The calculated gross fixed salary.
 
-    """  # noqa: E501
+    """
     target = cast_to_decimal(target)
     min_allowed_salary = cast_to_decimal(min_allowed_salary)
 
     if target < min_allowed_salary:
-        message = (
-            f"Can't be calculated for salary less than {min_allowed_salary}."
-        )
+        message = f"Can't be calculated for salary less than {min_allowed_salary}."
         raise ValueError(message)
 
-    if (
-        calculate_brackets_tax(target, brackets, min_allowed_salary, rounder)
-        == 0
-    ):
+    if calculate_brackets_tax(target, brackets, min_allowed_salary, rounder) == 0:
         return target
 
     max_amount_ratio = cast_to_decimal(max_amount_ratio, lt=0)
@@ -205,9 +200,7 @@ def calculate_gross_salary(
     max_amount = (target * max_amount_ratio).to_integral(rounding=ROUND_DOWN)
 
     while True:
-        mid_amount = ((min_amount + max_amount) / 2).to_integral(
-            rounding=ROUND_DOWN
-        )
+        mid_amount = ((min_amount + max_amount) / 2).to_integral(rounding=ROUND_DOWN)
         mid_net = mid_amount - calculate_brackets_tax(
             mid_amount, brackets, min_allowed_salary, rounder
         )
@@ -244,20 +237,18 @@ def calculate_gross_components(  # noqa: PLR0913
     Returns:
         tuple[Decimal, Decimal]: A tuple containing the gross salary and compensations.
 
-    """  # noqa: E501
+    """
     compensations_rate = cast_to_decimal(compensations_rate, lt=0, gt=1)
     target = cast_to_decimal(target)
     min_allowed_salary = cast_to_decimal(min_allowed_salary)
 
     if target < min_allowed_salary:
-        message = (
-            f"Can't be calculated for salary less than {min_allowed_salary}."
-        )
+        message = f"Can't be calculated for salary less than {min_allowed_salary}."
         raise ValueError(message)
 
-    gross_salary_before = Decimal(
-        target * (1 - compensations_rate)
-    ).to_integral(rounding=ROUND_DOWN)
+    gross_salary_before = Decimal(target * (1 - compensations_rate)).to_integral(
+        rounding=ROUND_DOWN
+    )
 
     if gross_salary_before < min_allowed_salary:
         gross_salary = min_allowed_salary

@@ -1,4 +1,4 @@
-# ruff: noqa: S101, PLR0913
+# ruff: noqa:  PLR0913
 
 from decimal import Decimal
 
@@ -47,9 +47,7 @@ def test_calculate_fixed_tax(
     ],
 )
 def test_calculate_fixed_tax_without_rounder(
-    compensations_tax_rate: Decimal,
-    amount: Number,
-    expected_tax: Decimal,
+    compensations_tax_rate: Decimal, amount: Number, expected_tax: Decimal
 ) -> None:
     result = calculate_fixed_tax(amount, compensations_tax_rate)
 
@@ -66,14 +64,9 @@ def test_calculate_fixed_tax_without_rounder(
     ],
 )
 def test_calculate_gross_compensation(
-    tax_rounder: Rounder,
-    compensations_tax_rate: Decimal,
-    target: Number,
-    expected_gross: Decimal,
+    tax_rounder: Rounder, compensations_tax_rate: Decimal, target: Number, expected_gross: Decimal
 ) -> None:
-    result = calculate_gross_compensation(
-        target, compensations_tax_rate, tax_rounder
-    )
+    result = calculate_gross_compensation(target, compensations_tax_rate, tax_rounder)
 
     assert isinstance(result, Decimal)
     assert result == expected_gross
@@ -89,9 +82,7 @@ def test_calculate_gross_compensation(
     ],
 )
 def test_calculate_gross_compensation_without_rounder(
-    compensations_tax_rate: Decimal,
-    target: Number,
-    expected_gross: Decimal,
+    compensations_tax_rate: Decimal, target: Number, expected_gross: Decimal
 ) -> None:
     result = calculate_gross_compensation(target, compensations_tax_rate)
 
@@ -117,9 +108,7 @@ def test_calculate_brackets_tax_without_ss(
     amount: Number,
     expected_tax: Decimal,
 ) -> None:
-    tax = calculate_brackets_tax(
-        amount, brackets, min_allowed_salary, tax_rounder
-    )
+    tax = calculate_brackets_tax(amount, brackets, min_allowed_salary, tax_rounder)
 
     assert isinstance(tax, Decimal)
     assert tax == expected_tax
@@ -134,10 +123,7 @@ def test_calculate_brackets_tax_without_ss(
     ],
 )
 def test_calculate_brackets_tax_without_rounder(
-    brackets: list[Bracket],
-    min_allowed_salary: Number,
-    amount: Number,
-    expected_tax: Decimal,
+    brackets: list[Bracket], min_allowed_salary: Number, amount: Number, expected_tax: Decimal
 ) -> None:
     tax = calculate_brackets_tax(amount, brackets, min_allowed_salary)
 
@@ -154,9 +140,7 @@ def test_calculate_brackets_tax_without_rounder(
     ],
 )
 def test_calculate_brackets_tax_without_brackets(
-    min_allowed_salary: Number,
-    amount: Number,
-    expected_tax: Decimal,
+    min_allowed_salary: Number, amount: Number, expected_tax: Decimal
 ) -> None:
     tax = calculate_brackets_tax(amount, [], min_allowed_salary)
 
@@ -227,9 +211,7 @@ def test_calculate_gross_salary(
     target: Number,
     expected_gross: Decimal,
 ):
-    gross_salary = calculate_gross_salary(
-        target, brackets, min_allowed_salary, tax_rounder
-    )
+    gross_salary = calculate_gross_salary(target, brackets, min_allowed_salary, tax_rounder)
 
     assert isinstance(gross_salary, Decimal)
     assert gross_salary == expected_gross

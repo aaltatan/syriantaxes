@@ -41,4 +41,6 @@ class SocialSecurity:
         return result
 
     def __repr__(self) -> str:
-        return f"SocialSecurity(min_salary={self._min_salary}, deduction_rate={self._deduction_rate})"  # noqa: E501
+        return (
+            f"SocialSecurity(min_salary={self._min_salary}, deduction_rate={self._deduction_rate})"
+        )

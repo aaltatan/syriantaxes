@@ -1,5 +1,3 @@
-# ruff: noqa: S101
-
 from decimal import Decimal
 
 import pytest
@@ -33,9 +31,7 @@ from syriantaxes.types import Number
     ],
 )
 def test_brackets_init_with_valid_args(
-    _min: tuple[Number, Decimal],
-    _max: tuple[Number, Decimal],
-    rate: tuple[Number, Decimal],
+    _min: tuple[Number, Decimal], _max: tuple[Number, Decimal], rate: tuple[Number, Decimal]
 ) -> None:
     min_value, min_expected = _min
     max_value, max_expected = _max
@@ -51,9 +47,7 @@ def test_brackets_init_with_valid_args(
     assert bracket.max == max_expected
     assert bracket.rate == rate_expected
 
-    assert (str(bracket)) == (
-        f"Bracket(min={min_value}, max={max_value}, rate={rate_value})"
-    )
+    assert (str(bracket)) == (f"Bracket(min={min_value}, max={max_value}, rate={rate_value})")
 
 
 @pytest.mark.parametrize(
@@ -66,9 +60,7 @@ def test_brackets_init_with_valid_args(
         (100, 50, -0.01),
     ],
 )
-def test_brackets_init_with_invalid_args(
-    _min: Number, _max: Number, rate: Number
-) -> None:
+def test_brackets_init_with_invalid_args(_min: Number, _max: Number, rate: Number) -> None:
     with pytest.raises(ValueError):
         Bracket(_min, _max, rate)
 

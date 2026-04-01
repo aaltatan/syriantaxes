@@ -1,3 +1,4 @@
+# ruff: noqa: A003
 from decimal import Decimal
 
 from .cast import cast_to_decimal
