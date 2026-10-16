@@ -1,35 +1,41 @@
+import decimal
+from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
 
-from .cast import cast_to_decimal
+from .cast import to_decimal, to_positive
 from .types import Number
+from .types import Rounder as RounderProtocol
 
 
 class RoundingMethod(str, Enum):
-    DOWN = "ROUND_DOWN"
-    HALF_UP = "ROUND_HALF_UP"
-    HALF_EVEN = "ROUND_HALF_EVEN"
-    CEILING = "ROUND_CEILING"
-    FLOOR = "ROUND_FLOOR"
-    UP = "ROUND_UP"
-    HALF_DOWN = "ROUND_HALF_DOWN"
-    UP05 = "ROUND_05UP"
+    DOWN = decimal.ROUND_DOWN
+    HALF_UP = decimal.ROUND_HALF_UP
+    HALF_EVEN = decimal.ROUND_HALF_EVEN
+    CEILING = decimal.ROUND_CEILING
+    FLOOR = decimal.ROUND_FLOOR
+    UP = decimal.ROUND_UP
+    HALF_DOWN = decimal.ROUND_HALF_DOWN
+    UP05 = decimal.ROUND_05UP
 
 
+@dataclass(frozen=True, init=False)
 class Rounder:
+    method: RoundingMethod
+    to_nearest: Decimal
+
     def __init__(self, method: RoundingMethod, to_nearest: Number) -> None:
-        self._method = method
-        self._to_nearest = cast_to_decimal(to_nearest, lt=0)
+        object.__setattr__(self, "method", method)
+        object.__setattr__(self, "to_nearest", to_positive(to_nearest))
 
     def round(self, number: Number) -> Decimal:
-        value = cast_to_decimal(number)
+        steps = to_decimal(number) / self.to_nearest
+        return steps.to_integral_value(self.method) * self.to_nearest
 
-        return (value / self._to_nearest).to_integral_value(self._method) * self._to_nearest
 
-    @property
-    def to_nearest(self) -> Decimal:
-        return self._to_nearest
+TO_CENTS = Rounder(RoundingMethod.HALF_EVEN, "0.01")
 
-    @to_nearest.setter
-    def to_nearest(self, value: Number) -> None:
-        self._to_nearest = cast_to_decimal(value, lt=0)
+
+def apply_rounding(value: Decimal, rounder: RounderProtocol | None) -> Decimal:
+    """Round value with rounder, or return it unchanged when there is no rounder."""
+    return value if rounder is None else rounder.round(value)

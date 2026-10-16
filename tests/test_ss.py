@@ -1,6 +1,8 @@
+from dataclasses import FrozenInstanceError
 from decimal import Decimal
 
 import pytest
+
 from syriantaxes import Rounder, RoundingMethod, SocialSecurity
 from syriantaxes.types import Number
 
@@ -49,10 +51,6 @@ def test_ss_with_rounder_calculate_deduction(
     assert isinstance(ss.min_salary, Decimal)
     assert isinstance(ss.deduction_rate, Decimal)
     assert isinstance(result, Decimal)
-
-    assert (
-        str(ss) == f"SocialSecurity(min_salary={ss.min_salary}, deduction_rate={ss.deduction_rate})"
-    )
     assert result == deduction
 
 
@@ -94,12 +92,6 @@ def test_init_with_invalid_args(min_ss_allowed_salary: Decimal) -> None:
         SocialSecurity(Decimal(-1_000_000), 0.5)
 
 
-def test_init_with_invalid_setter(ss: SocialSecurity) -> None:
-    with pytest.raises(ValueError):
-        ss.min_salary = Decimal(-1_000_000)
-
-    with pytest.raises(ValueError):
-        ss.deduction_rate = Decimal("-0.1")
-
-    with pytest.raises(ValueError):
-        ss.deduction_rate = Decimal("1.1")
+def test_ss_is_immutable(ss: SocialSecurity) -> None:
+    with pytest.raises(FrozenInstanceError):
+        ss.deduction_rate = Decimal("0.1")  # type: ignore[misc]

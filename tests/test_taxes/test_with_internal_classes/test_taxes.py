@@ -1,8 +1,7 @@
-# ruff: noqa:  PLR0913
-
 from decimal import Decimal
 
 import pytest
+
 from syriantaxes import (
     Bracket,
     Rounder,
@@ -210,7 +209,7 @@ def test_calculate_gross_salary(
     tax_rounder: Rounder,
     target: Number,
     expected_gross: Decimal,
-):
+) -> None:
     gross_salary = calculate_gross_salary(target, brackets, min_allowed_salary, tax_rounder)
 
     assert isinstance(gross_salary, Decimal)
@@ -233,7 +232,7 @@ def test_calculate_gross_salary_without_rounder(
     min_allowed_salary: Number,
     target: Number,
     expected_gross: Decimal,
-):
+) -> None:
     gross_salary = calculate_gross_salary(target, brackets, min_allowed_salary)
 
     assert isinstance(gross_salary, Decimal)
@@ -277,7 +276,7 @@ def test_calculate_gross_components(
     target: Number,
     expected_gross: Decimal,
     expected_compensations: Decimal,
-):
+) -> None:
     gross_salary, gross_compensations = calculate_gross_components(
         target=target,
         compensations_rate=compensations_rate,

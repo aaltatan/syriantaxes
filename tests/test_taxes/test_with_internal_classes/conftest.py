@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+
 from syriantaxes import Bracket, Rounder, RoundingMethod, SocialSecurity
 
 

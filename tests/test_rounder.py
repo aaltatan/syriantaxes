@@ -1,6 +1,8 @@
+from dataclasses import FrozenInstanceError
 from decimal import Decimal
 
 import pytest
+
 from syriantaxes import Rounder, RoundingMethod
 from syriantaxes.types import Number
 
@@ -36,8 +38,13 @@ def test_rounder_init_with_invalid_args() -> None:
         Rounder(RoundingMethod.CEILING, -100)
 
 
-def test_rounder_init_with_invalid_setter() -> None:
+def test_rounder_is_immutable() -> None:
     rounder = Rounder(RoundingMethod.CEILING, 100)
 
+    with pytest.raises(FrozenInstanceError):
+        rounder.to_nearest = Decimal(10)  # type: ignore[misc]
+
+
+def test_rounder_rejects_zero_to_nearest() -> None:
     with pytest.raises(ValueError):
-        rounder.to_nearest = -100
+        Rounder(RoundingMethod.CEILING, 0)

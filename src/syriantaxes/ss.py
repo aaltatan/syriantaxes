@@ -1,46 +1,28 @@
+from dataclasses import dataclass
 from decimal import Decimal
 
-from .cast import cast_to_decimal
+from .cast import to_non_negative, to_rate, validated
+from .rounder import apply_rounding
 from .types import Number, Rounder
 
 
+@dataclass(frozen=True, init=False)
 class SocialSecurity:
+    min_salary: Decimal
+    deduction_rate: Decimal
+    rounder: Rounder | None
+
     def __init__(
         self,
         min_salary: Number,
         deduction_rate: Number,
         rounder: Rounder | None = None,
     ) -> None:
-        self._min_salary = cast_to_decimal(min_salary, lt=0)
-        self._deduction_rate = cast_to_decimal(deduction_rate, lt=0, gt=1)
-        self.rounder = rounder
-
-    @property
-    def min_salary(self) -> Decimal:
-        return self._min_salary
-
-    @min_salary.setter
-    def min_salary(self, value: Number) -> None:
-        self._min_salary = cast_to_decimal(value, lt=0)
-
-    @property
-    def deduction_rate(self) -> Decimal:
-        return self._deduction_rate
-
-    @deduction_rate.setter
-    def deduction_rate(self, value: Number) -> None:
-        self._deduction_rate = cast_to_decimal(value, lt=0, gt=1)
+        object.__setattr__(self, "min_salary", to_non_negative(min_salary))
+        object.__setattr__(self, "deduction_rate", to_rate(deduction_rate))
+        object.__setattr__(self, "rounder", rounder)
 
     def calculate_deduction(self, salary: Number) -> Decimal:
-        salary = cast_to_decimal(salary, lt=self._min_salary)
-        result = salary * self._deduction_rate
-
-        if self.rounder is not None:
-            return self.rounder.round(result)
-
-        return result
-
-    def __repr__(self) -> str:
-        return (
-            f"SocialSecurity(min_salary={self._min_salary}, deduction_rate={self._deduction_rate})"
-        )
+        minimum = self.min_salary
+        base = validated(salary, lambda number: number >= minimum, f"a salary >= {minimum}")
+        return apply_rounding(base * self.deduction_rate, self.rounder)

@@ -1,39 +1,38 @@
-# ruff: noqa: A003
+from dataclasses import dataclass
 from decimal import Decimal
 
-from .cast import cast_to_decimal
-from .types import Number
+from .cast import to_non_negative, to_rate, validated
+from .types import AnyBracket, Number
 
 
+@dataclass(frozen=True, init=False)
 class Bracket:
-    def __init__(self, _min: Number, _max: Number, rate: Number) -> None:
-        self._min = cast_to_decimal(_min, lt=0)
-        self._max = cast_to_decimal(_max, lte=self._min)
-        self._rate = cast_to_decimal(rate, lt=0, gt=1)
+    min: Decimal
+    max: Decimal
+    rate: Decimal
 
-    @property
-    def min(self) -> Decimal:
-        return self._min
+    def __init__(self, min_: Number, max_: Number, rate: Number) -> None:
+        lower = to_non_negative(min_)
+        upper = validated(max_, lambda number: number > lower, f"a max above {lower}")
 
-    @min.setter
-    def min(self, value: Number) -> None:
-        self._min = cast_to_decimal(value, lt=0, gte=self._max)
+        object.__setattr__(self, "min", lower)
+        object.__setattr__(self, "max", upper)
+        object.__setattr__(self, "rate", to_rate(rate))
 
-    @property
-    def max(self) -> Decimal:
-        return self._max
 
-    @max.setter
-    def max(self, value: Number) -> None:
-        self._max = cast_to_decimal(value, lte=self._min)
+def to_bracket(bracket: AnyBracket) -> Bracket:
+    """Turn any supported bracket shape (Bracket, dict or object) into a Bracket."""
+    if isinstance(bracket, Bracket):
+        return bracket
 
-    @property
-    def rate(self) -> Decimal:
-        return self._rate
+    if isinstance(bracket, dict):
+        return Bracket(bracket["min"], bracket["max"], bracket["rate"])
 
-    @rate.setter
-    def rate(self, value: Number) -> None:
-        self._rate = cast_to_decimal(value, lt=0, gt=1)
+    return Bracket(bracket.min, bracket.max, bracket.rate)
 
-    def __repr__(self) -> str:
-        return f"Bracket(min={self._min}, max={self._max}, rate={self._rate})"
+
+def bracket_tax(bracket: Bracket, salary: Decimal) -> Decimal:
+    """Tax on the part of salary that falls inside the bracket."""
+    width = bracket.max - bracket.min
+    taxed_part = min(max(salary - bracket.min, Decimal(0)), width)
+    return taxed_part * bracket.rate
