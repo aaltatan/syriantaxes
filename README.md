@@ -2,17 +2,13 @@
 
 A Python package for calculating taxes and compensations for Syrian salaries based on Syrian tax laws.
 
-## Features
-
-- Calculate fixed taxes and bracket-based taxes
-- Handle social security deductions
-- Support for custom rounding methods
-- Protocol-based design for extensibility
-- 100% test coverage with 178 successful test cases
+- Progressive salary tax, with social security deducted first
+- Flat tax on compensations
+- The reverse problems: the gross salary or compensation that gives a wanted net
+- Splitting a net package into salary and compensation
+- `Decimal` in, `Decimal` out; fully typed (mypy strict), with 100% test coverage
 
 ## Installation
-
-Install Syriantaxes using pip:
 
 ```bash
 pip install syriantaxes
@@ -24,287 +20,132 @@ Or using uv:
 uv add syriantaxes
 ```
 
-## Quick Start
+## The idea
+
+Everything the law fixes for a period (the brackets, rates, minimum salary and rounding) goes into
+one immutable `TaxRules` value. Every calculation is a plain function of those rules and an amount.
+When the law changes, you make new rules; your code stays the same.
 
 ```python
-from decimal import Decimal
-from syriantaxes import Bracket, Rounder, RoundingMethod, SocialSecurity, calculate_brackets_tax
+from decimal import ROUND_CEILING, Decimal
 
-# Define tax brackets
-brackets = [
-    Bracket(0, 837_000, 0),
-    Bracket(837_000, 850_000, Decimal("0.11")),
-    Bracket(850_000, 1_100_000, Decimal("0.13")),
-    Bracket(1_100_000, 25_000_000, Decimal("0.15")),
-]
+from syriantaxes import Bracket, SocialSecurity, TaxRules, round_to
 
-# Create a rounder
-rounder = Rounder(RoundingMethod.CEILING, 100)
-
-# Create social security object
-ss = SocialSecurity(Decimal(750_000), Decimal("0.07"), rounder)
-
-# Calculate tax
-salary = Decimal(1_000_000)
-tax = calculate_brackets_tax(salary, brackets, Decimal(837_000), rounder, ss)
-print(f"Tax: {tax}")  # Tax: 11900
-```
-
-## Classes
-
-### Bracket
-
-Represents a tax bracket with minimum, maximum, and rate.
-
-```python
-from syriantaxes import Bracket
-from decimal import Decimal
-
-bracket = Bracket(0, 837_000, 0)
-print(bracket.min)  # 0
-print(bracket.max)  # 837000
-print(bracket.rate)  # 0
-```
-
-`Bracket`, `Rounder` and `SocialSecurity` are immutable: their values are checked when they are created and can't be changed afterwards. To change a value, create a new object.
-
-### Rounder
-
-Handles rounding of decimal numbers using various methods.
-
-```python
-from syriantaxes import Rounder, RoundingMethod
-
-rounder = Rounder(RoundingMethod.CEILING, 100)
-result = rounder.round(Decimal("123.45"))
-print(result)  # 200
-```
-
-Available rounding methods:
-
-- `ROUND_DOWN`
-- `ROUND_HALF_UP`
-- `ROUND_HALF_EVEN`
-- `ROUND_CEILING`
-- `ROUND_FLOOR`
-- `ROUND_UP`
-- `ROUND_HALF_DOWN`
-- `ROUND_05UP`
-
-### SocialSecurity
-
-Calculates social security deductions.
-
-```python
-from syriantaxes import SocialSecurity, Rounder, RoundingMethod
-
-rounder = Rounder(RoundingMethod.CEILING, 1)
-ss = SocialSecurity(Decimal(750_000), Decimal("0.07"), rounder)
-deduction = ss.calculate_deduction(Decimal(1_000_000))
-print(deduction)  # 70000
-```
-
-## Functions
-
-### calculate_fixed_tax
-
-Calculate fixed tax for an amount.
-
-```python
-from syriantaxes import calculate_fixed_tax, Rounder, RoundingMethod
-
-rounder = Rounder(RoundingMethod.CEILING, 100)
-tax = calculate_fixed_tax(Decimal(1_000_000), Decimal("0.05"), rounder)
-print(tax)  # 50000
-```
-
-### calculate_brackets_tax
-
-Calculate tax based on progressive brackets.
-
-```python
-from syriantaxes import calculate_brackets_tax, Bracket, SocialSecurity, Rounder, RoundingMethod
-
-brackets = [
-    Bracket(0, 837_000, 0),
-    Bracket(837_000, 850_000, Decimal("0.11")),
-    Bracket(850_000, 1_100_000, Decimal("0.13")),
-]
-
-rounder = Rounder(RoundingMethod.CEILING, 100)
-ss = SocialSecurity(Decimal(750_000), Decimal("0.07"), rounder)
-
-tax = calculate_brackets_tax(Decimal(1_000_000), brackets, Decimal(837_000), rounder, ss)
-print(tax)  # 11900
-```
-
-### calculate_gross_compensation
-
-Calculate gross compensation from net amount.
-
-```python
-from syriantaxes import calculate_gross_compensation
-
-gross = calculate_gross_compensation(Decimal(1_000_000), Decimal("0.05"))
-print(gross)  # 1052631.58
-```
-
-### calculate_gross_salary
-
-Calculate gross salary from net target.
-
-```python
-from syriantaxes import calculate_gross_salary, Bracket
-
-brackets = [
-    Bracket(0, 837_000, 0),
-    Bracket(837_000, 850_000, Decimal("0.11")),
-    Bracket(850_000, 1_100_000, Decimal("0.13")),
-]
-
-gross = calculate_gross_salary(Decimal(1_000_000), brackets, Decimal(837_000))
-print(gross)  # 1024058
-```
-
-### calculate_gross_components
-
-Calculate gross salary and compensations.
-
-```python
-from syriantaxes import calculate_gross_components, Bracket
-
-brackets = [
-    Bracket(0, 837_000, 0),
-    Bracket(837_000, 850_000, Decimal("0.11")),
-    Bracket(850_000, 1_100_000, Decimal("0.13")),
-]
-
-salary, compensations = calculate_gross_components(
-    Decimal(1_000_000), Decimal("0.2"), brackets, Decimal(837_000), Decimal("0.05")
+rules = TaxRules(
+    brackets=(
+        Bracket(lower=Decimal(0), rate=Decimal(0)),
+        Bracket(lower=Decimal(837_000), rate=Decimal("0.11")),
+        Bracket(lower=Decimal(850_000), rate=Decimal("0.13")),
+        Bracket(lower=Decimal(1_100_000), rate=Decimal("0.15")),
+    ),
+    min_salary=Decimal(837_000),
+    compensation_tax_rate=Decimal("0.05"),
+    social_security=SocialSecurity(
+        rate=Decimal("0.07"),
+        min_salary=Decimal(750_000),
+        rounding=round_to(Decimal(1), ROUND_CEILING),
+    ),
+    rounding=round_to(Decimal(100), ROUND_CEILING),  # taxes are rounded up to 100
 )
-print(f"Salary: {salary}, Compensations: {compensations}")
 ```
 
-`rounder` must be passed by keyword here (`rounder=...`), as must `ss_salary` in `calculate_brackets_tax`.
+The rules are checked when they are created:
+- the brackets must start at 0 and go up;
+- every rate must be at least 0 and below 1;
+- amounts can't be negative.
 
-### Errors
+## Salary
 
-`calculate_gross_salary` and `calculate_gross_components` raise `SalaryBelowMinimumError` (a `ValueError` subclass) when the target is below `min_allowed_salary`.
+Each bracket runs from its `lower` up to the next bracket's `lower`; the last one has no top.
 
 ```python
-from syriantaxes import SalaryBelowMinimumError, calculate_gross_salary
+from syriantaxes import gross_salary, salary_breakdown, salary_tax
 
-try:
-    calculate_gross_salary(Decimal(500_000), brackets, Decimal(837_000))
-except SalaryBelowMinimumError as error:
-    print(error)  # Can't be calculated for salary less than 837000.
+breakdown = salary_breakdown(rules, Decimal(1_000_000), insured_salary=Decimal(750_000))
+print(breakdown.social_security, breakdown.taxable, breakdown.tax, breakdown.net)
+# 52500 947500 14200 933300
+
+print(salary_tax(rules, Decimal(1_000_000)))  # 11900
+
+print(gross_salary(rules, Decimal(1_000_000)))  # 1101183
 ```
 
-`calculate_gross_salary` raises `NoExactGrossSalaryError` (also a `ValueError`) when no whole-number gross salary gives exactly the target net, for example when a 100% bracket caps the net.
+- `insured_salary` is the salary that social security is based on; it defaults to the gross salary.
+- `gross_salary` returns the first whole gross salary whose net (after social security and tax) is at least the target. It solves the brackets exactly and then accounts for rounding, so there is no search range to tune.
 
-## Advanced Examples with External Classes
-
-Syriantaxes uses protocols, allowing you to implement custom classes that conform to the expected interfaces.
-
-### Custom SocialSecurity
+## Compensation
 
 ```python
-from decimal import Decimal
-from math import ceil
-from syriantaxes import calculate_brackets_tax
+from syriantaxes import compensation_tax, gross_compensation
 
-
-class CustomSocialSecurity:
-    def __init__(self, min_salary: Decimal):
-        self._min_salary = min_salary
-
-    def calculate_deduction(self, salary: Decimal) -> Decimal:
-        deduction = Decimal(salary) * Decimal("0.07")
-        return Decimal(ceil(deduction))
-
-
-# Custom brackets as dicts
-brackets = [
-    {"min": 0, "max": 837_000, "rate": 0},
-    {"min": 837_000, "max": 850_000, "rate": 0.11},
-    {"min": 850_000, "max": 1_100_000, "rate": 0.13},
-]
-
-ss = CustomSocialSecurity(Decimal(750_000))
-
-tax = calculate_brackets_tax(Decimal(1_000_000), brackets, Decimal(500_000), ss_obj=ss)
-print(tax)  # 20930
+print(compensation_tax(rules, Decimal(1_000_000)))  # 50000
+print(gross_compensation(rules, Decimal(1_000_000)))  # 1052700
 ```
 
-### Custom Rounder
+## Splitting a net package
+
+`split_net_package` pays `compensation_share` of a net total as compensation and the rest as salary.
+If the salary part would be below the minimum salary, the salary is set to the minimum and the
+compensation makes up the difference.
 
 ```python
-from decimal import Decimal
-from math import ceil
-from syriantaxes import calculate_fixed_tax
+from syriantaxes import split_net_package
 
-
-class CustomRounder:
-    def round(self, number: Decimal) -> Decimal:
-        return Decimal(ceil(number / 100) * 100)
-
-
-rounder = CustomRounder()
-tax = calculate_fixed_tax(Decimal(1_000_000), Decimal("0.05"), rounder)
-print(tax)  # 50000
+package = split_net_package(rules, Decimal(4_000_000), Decimal("0.75"))
+print(package.salary, package.compensation)  # 1101183 3157900
 ```
 
-### Custom Brackets
+## Rounding
 
-You can use classes with properties, variables, or class variables:
+A rounding rule is any function from `Decimal` to `Decimal`. `round_to(step, method)` makes one that
+rounds to a multiple of `step`, using any of the `decimal` module's rounding modes. Without a
+rounding rule, amounts are rounded half-even to the cent (`to_cents`).
 
-```python
-from syriantaxes import calculate_brackets_tax
+## Inputs: Decimal only
 
+Syriantaxes doesn't convert inputs: turn ints, floats or strings into `Decimal` yourself. Build
+decimals from strings or ints, never from floats: `Decimal("0.11")` is exactly 0.11, while
+`Decimal(0.11)` isn't.
 
-class CustomBracket:
-    def __init__(self, min_val, max_val, rate_val):
-        self.min = min_val
-        self.max = max_val
-        self.rate = rate_val
+## Errors
 
+- `SalaryBelowMinimumError` (a `ValueError`): `gross_salary` and `split_net_package` raise it when the target is below `rules.min_salary`.
+- `ValueError`: raised for invalid rules or arguments, such as a rate of 1, or an insured salary below the social security minimum.
 
-brackets = [
-    CustomBracket(0, 837_000, 0),
-    CustomBracket(837_000, 850_000, 0.11),
-    CustomBracket(850_000, 1_100_000, 0.13),
-]
+## Upgrading from 0.x
 
-tax = calculate_brackets_tax(Decimal(1_000_000), brackets, Decimal(500_000))
-print(tax)  # 20930
-```
+1.0 is a new API. The old functions map like this:
 
-## Testing
+| 0.x | 1.0 |
+| --- | --- |
+| `calculate_brackets_tax(amount, brackets, min_allowed_salary, rounder, ss_obj, ss_salary=...)` | `salary_tax(rules, gross, insured_salary=...)` |
+| `calculate_fixed_tax(amount, rate, rounder)` | `compensation_tax(rules, amount)` |
+| `calculate_gross_compensation(target, rate, rounder)` | `gross_compensation(rules, net)` |
+| `calculate_gross_salary(target, brackets, min_allowed_salary, rounder)` | `gross_salary(rules, net)` |
+| `calculate_gross_components(target, rate, brackets, min_allowed_salary, tax_rate, rounder=...)` | `split_net_package(rules, net_total, compensation_share)` |
+| `Bracket(min, max, rate)` | `Bracket(lower, rate)` |
+| `Rounder(RoundingMethod.CEILING, 100)` | `round_to(Decimal(100), ROUND_CEILING)` |
 
-The package has comprehensive test coverage:
+Behavior changes:
+- `gross_salary` never returns a gross whose net is below the target. Where tax is rounded to the cent, 0.x could return a gross 1 lower, whose net fell up to 0.15 short of the target.
+- When more than one gross gives the exact target net, `gross_salary` returns the smallest.
+- Custom social security objects are replaced by `SocialSecurity` rules. Custom rounders are plain functions.
 
-- **Coverage**: 100%
-- **Test Cases**: 178 successful tests
+## Development
 
-The project uses [uv](https://docs.astral.sh/uv/). Set up the environment with:
+The project uses [uv](https://docs.astral.sh/uv/):
 
 ```bash
 uv sync
 ```
 
-Run the tests with coverage:
-
 ```bash
 uv run pytest --cov
 ```
 
-Type-check with mypy (strict mode):
-
 ```bash
 uv run mypy
 ```
-
-Lint and check formatting with ruff:
 
 ```bash
 uv run ruff check
@@ -313,10 +154,6 @@ uv run ruff check
 ```bash
 uv run ruff format --check
 ```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

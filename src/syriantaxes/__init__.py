@@ -1,26 +1,31 @@
-from .bracket import Bracket
-from .rounder import Rounder, RoundingMethod
-from .ss import SocialSecurity
-from .taxes import (
-    NoExactGrossSalaryError,
+from .compensation import compensation_tax, gross_compensation
+from .package import Package, split_net_package
+from .rounding import Rounding, round_to, to_cents
+from .rules import Bracket, SocialSecurity, TaxRules
+from .salary import (
     SalaryBelowMinimumError,
-    calculate_brackets_tax,
-    calculate_fixed_tax,
-    calculate_gross_compensation,
-    calculate_gross_components,
-    calculate_gross_salary,
+    SalaryBreakdown,
+    gross_salary,
+    salary_breakdown,
+    salary_tax,
+    social_security_deduction,
 )
 
 __all__ = [
     "Bracket",
-    "NoExactGrossSalaryError",
-    "Rounder",
-    "RoundingMethod",
+    "Package",
+    "Rounding",
     "SalaryBelowMinimumError",
+    "SalaryBreakdown",
     "SocialSecurity",
-    "calculate_brackets_tax",
-    "calculate_fixed_tax",
-    "calculate_gross_compensation",
-    "calculate_gross_components",
-    "calculate_gross_salary",
+    "TaxRules",
+    "compensation_tax",
+    "gross_compensation",
+    "gross_salary",
+    "round_to",
+    "salary_breakdown",
+    "salary_tax",
+    "social_security_deduction",
+    "split_net_package",
+    "to_cents",
 ]
